@@ -1,19 +1,29 @@
 ---
 - name: Configure bash defaults.
   copy: 
-    src: "dotfiles/skel/"
+    src: dotfiles/skel/
     dest: /etc/skel/
 
 - name: Add bash and vim configuration for user profile.
   copy: 
-    src: "dotfiles/skel/"
+    src: dotfiles/skel/
     dest: "/home/{{ ansible_user }}/"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     # Never replace files if they already exist.
     force: False
 
-- name: Ensure root profile environment variables.
+- name: Add root bashrc and vim configuration. (Debian)
+  copy: 
+    src: "{{ item }}"
+    dest: /root/
+    owner: root
+    group: root
+  with_list:
+    - dotfiles/root/.bashrc
+  when: ansible_os_family == 'Debian'
+
+- name: Add root bashrc and vim configuration. (RedHat)
   lineinfile:
     path: /root/.bashrc
     regexp: "{{ item.regexp }}"
@@ -21,16 +31,17 @@
     state: present
   with_items:
     - regexp: '^(export )?EDITOR='
-      line: 'export EDITOR=vim'
+      line: 'export EDITOR=vim.basic'
+    - regexp: '^(export )?VISUAL='
+      line: 'export VISUAL=vim.basic'
     - regexp: '^(export )?HISTCONTROL='
       line: 'HISTCONTROL=ignoreboth'
-#   - regexp: '^pheonix'
-#     line: "pheonix() { \n\tsystemctl restart $1 ; journalctl -fu $1 \n}"
+  when: ansible_os_family == 'RedHat'
 
 - name: Add bash and vim configuration for root profile.
   copy: 
-    src: "dotfiles/skel/"
-    dest: "/root/"
+    src: dotfiles/skel/
+    dest: /root/
     owner: root
     group: root
     # Never replace files if they already exist.
